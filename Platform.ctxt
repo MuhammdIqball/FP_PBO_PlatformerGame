@@ -1,9 +1,0 @@
-#BlueJ class context
-comment0.target=Platform
-comment1.params=x\ y\ w\ h\ img\ type
-comment1.target=Platform(int,\ int,\ int,\ int,\ java.awt.image.BufferedImage,\ Platform.Type)
-comment2.params=
-comment2.target=void\ update()
-comment3.params=g2
-comment3.target=void\ draw(java.awt.Graphics2D)
-numComments=4
