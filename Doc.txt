@@ -1,0 +1,20 @@
+Map/LVL Making :
+    - Desain dari array string Level di GamePanel.java
+    - J = Player
+    - G = Ground / Brick 
+    - X = Goal / Next Level
+    - P = Platform
+    - S = Spike
+    - . = Empty Space
+
+Nambah Object Baru :
+    - Buat Class Baru
+    - Tambah Listny, conth : ArrayList<Objek>
+    - Tambah BufferImage
+    - Load img di loadImages()
+    - Tambah case di loadLevelFromText()
+    - Tambah for di update()
+
+Atur Collision Objek :
+    Platform Collision :
+        -
