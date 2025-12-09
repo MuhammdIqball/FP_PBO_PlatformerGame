@@ -18,11 +18,11 @@ public class GamePanel extends JPanel implements Runnable {
         "................G",  // row 1
         "................G",  // row 2
         "................G",  // row 3
-        "................G",  // row 4
+        ".........FFF....G",  // row 4
         "..XPPPPPPGGGP...G", // row 5
-        "..G.........P...G", // row 6
+        "..G.........F...G", // row 6
         "............P...G",  // row 7
-        "............P...G",  // row 8
+        ".....FF.....F...G",  // row 8
         "....PGG..PGGG...G", // row 9  -> J = spawn player
         "J.........GGG...G",  // row 10
         "GGG.G..GG.GGG.GGG",  // row 10
@@ -66,18 +66,23 @@ public class GamePanel extends JPanel implements Runnable {
     private Thread gameThread;
     public KeyHandler keyH = new KeyHandler(this);
 
+    //Object List
     public Player player;
     public ArrayList<Platform> platforms = new ArrayList<>();
     public ArrayList<Spike> spikes = new ArrayList<>();
     public ArrayList<Platform2> platforms2 = new ArrayList<>();
+    public ArrayList<Fruit> fruit = new ArrayList<>();
     public Goal goal;
 
-    public BufferedImage imgBg, imgPlayer, imgPlatform, imgSpike, imgGoal, imgPlatform2;
+    public BufferedImage imgBg, imgPlayer, imgPlatform, imgSpike, imgGoal, imgPlatform2, imgFruit;
 
     public int lives = 3;
+    public int score = 0;
     public boolean isRunning = true;
     public boolean isPaused = false;
     public String statusMsg = "";
+
+    
 
     public GamePanel() {
         
@@ -87,17 +92,17 @@ public class GamePanel extends JPanel implements Runnable {
         this.setFocusable(true);
 
         loadImages();   // load semua asset
-        // createLevel();  
-        loadLevelFromText(level1);
-
-        // spawn player
         player = new Player(100, 400, 26, 26, this, keyH);
+        
+        // spawn player
+        loadLevelFromText(level1);
     }
 
 
     // Game Function
     public void restartGame() {
         lives = 3;
+        score = 0;
         isRunning = true;
         isPaused = false;
         statusMsg = "";
@@ -159,6 +164,7 @@ public class GamePanel extends JPanel implements Runnable {
         imgSpike    = loadImage("assets/spike.png");
         imgGoal     = loadImage("assets/goal.png");
         imgPlatform2 = loadImage("assets/plat.png");
+        imgFruit = loadImage("assets/fruit.png");
     }
 
 
@@ -202,7 +208,11 @@ public class GamePanel extends JPanel implements Runnable {
                         spawnX = x;
                         spawnY = y - 10;
                         break;
-                        
+                    
+                    case 'F':
+                        fruit.add(new Fruit(x+20, y+20, 12, 17, imgFruit));
+                        break;
+
                     case '.':
                     default:
                         // kosong
@@ -295,6 +305,14 @@ public class GamePanel extends JPanel implements Runnable {
                 }
             }
 
+            for (Fruit f : fruit) {
+                if (!f.collected && pr.intersects(f.hitbox)) {
+                    score++;
+                    f.collected = true; 
+                    break;
+            }
+}
+
             // Goal
             if (goal != null && pr.intersects(goal.hitbox)) {
                 nextLevel();
@@ -327,6 +345,9 @@ public class GamePanel extends JPanel implements Runnable {
         for (Platform2 p2 : platforms2) {
             p2.draw(g2);
         }
+        for (Fruit f : fruit) {
+            f.draw(g2);
+        }
         if (goal != null) goal.draw(g2);
         if (player != null) player.draw(g2);
 
@@ -334,6 +355,7 @@ public class GamePanel extends JPanel implements Runnable {
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.BOLD, 18));
         g2.drawString("Lives: " + lives, 20, 30);
+        g2.drawString("Score: " + score, 20, 60);
 
         if (isPaused) {
             g2.setColor(new Color(0, 0, 0, 150));
