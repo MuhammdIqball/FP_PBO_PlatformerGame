@@ -60,7 +60,7 @@ public class Player {
     }
 
     public void update() {
-        // Input horizontal
+        // 1. Input horizontal
         vx = 0;
 
         if (keyH.left) {
@@ -72,25 +72,50 @@ public class Player {
             facingRight = true;  // hadap kanan
         }
 
-        // Lompat
+        // 2. Lompat
         if (keyH.jump && onGround) {
             vy = jumpSpeed;
             onGround = false;
         }
 
-        // Gravity
+        // 3. Gravity
         vy += gravity;
         if (vy > maxFallSpeed) vy = maxFallSpeed;
 
-        // Gerak horizontal + collision
+        // 4. Gerak horizontal + collision Platform
         x += (int) Math.round(vx);
         updateHitbox();
         checkHorizontalCollisions();
 
-        // Gerak vertikal + collision
+        // 5. Gerak vertikal + collision Platform
         y += (int) Math.round(vy);
         updateHitbox();
         checkVerticalCollisions();
+
+        // 6. Cek Batas Layar (Screen Bounds)
+        // Ini dipanggil terakhir supaya posisi dikoreksi jika tembus layar
+        checkScreenBounds();
+    }
+
+    private void checkScreenBounds() {
+        // Cek Kiri (x < 0)
+        if (x < 0) {
+            x = 0;
+        }
+
+        // Cek Kanan (x + width > lebar layar)
+        // gp.screenWidth diambil dari GamePanel
+        if (x + width > gp.screenWidth) {
+            x = gp.screenWidth - width;
+        }
+        
+        // Cek Atas - Supaya tidak lompat tembus langit
+         if (y < 0) {
+             y = 0;
+             vy = 0; 
+         }
+
+        updateHitbox();
     }
 
     private void checkHorizontalCollisions() {
@@ -110,14 +135,13 @@ public class Player {
     private void checkVerticalCollisions() {
         onGround = false;
 
-        // Platform utama
         for (Platform p : gp.platforms) {
             if (hitbox.intersects(p.hitbox)) {
-                if (vy > 0) { // jatuh dari atas
+                if (vy > 0) { 
                     y = p.hitbox.y - height;
                     vy = 0;
                     onGround = true;
-                } else if (vy < 0) { // nabrak dari bawah
+                } else if (vy < 0) {
                     y = p.hitbox.y + p.hitbox.height;
                     vy = 0;
                 }
@@ -148,7 +172,7 @@ public class Player {
     public void draw(Graphics2D g2) {
         if (image != null) {
             if (facingRight) {
-                // normal
+                
                 g2.drawImage(image, x, y, width, height, null);
             } else {
                 // flip horizontal: geser x, width negatif
