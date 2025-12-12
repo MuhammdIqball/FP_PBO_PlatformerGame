@@ -22,6 +22,8 @@ public class Spike {
 
     public void draw(Graphics2D g2) {
         if (image != null) {
+            // Gambar digambar seukuran width/height yang di-pass saat new Spike(...)
+            // Jadi kalau width=20, gambar akan mengecil jadi 20px
             g2.drawImage(image, x, y, width, height, null);
         } else {
             g2.setColor(Color.RED);

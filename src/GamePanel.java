@@ -12,50 +12,53 @@ public class GamePanel extends JPanel implements Runnable {
     public final int screenHeight = 600;
     public final int tileSize = 50;
 
-    // LEVEL 1 pakai teks (16 kolom x 12 baris kalau tileSize = 50 dan screen 800x600)
+    // LEVEL 1: Tutorial Dasar (Tetap sama)
     private String[] level1 = {
-        "................G",  // row 0
-        "................G",  // row 1
-        "................G",  // row 2
-        "................G",  // row 3
-        ".........FFF....G",  // row 4
-        "..XPPPPPPGGGP...G", // row 5
-        "..G.........F...G", // row 6
-        "............P...G",  // row 7
-        ".....FF.....F...G",  // row 8
-        "....PGG..PGGG...G", // row 9  -> J = spawn player
-        "J.........GGG...G",  // row 10
-        "GGG.G..GG.GGG.GGG",  // row 10
-        "GGGSSSSSSSSSSSGGG"   // row 11 -> G = ground bawah
-    };
-    private String[] level2 = {
-        "................G",  // row 0
-        "................G",  // row 1
-        "......X.........G",  // row 2
-        "......G..P......G",  // row 3  
-        ".....S....P.....G",  // row 4
-        "....GGG..........",  // row 5  
-        "........P.......G",  // row 6
-        "..........GGG....G", // row 7  
-        ".......P........G",  // row 8
-        "..........G.....G",  // row 9
-        "J.......G.......G",  // row 10 -> harus lompat ke platform sebelum ke goal
-        "GGGGGGGGGGGGGGGGG"   // row 11
+        "................G",  
+        "................G",  
+        "................G",  
+        "................G",  
+        ".........FFF....G",  
+        "..XPPPPPPGGGP...G", 
+        "..G.........F...G", 
+        "............P...G",  
+        ".....FF.....F...G",  
+        "....PGG..PGGG...G", 
+        "J.........GGG...G",  
+        "GGG.G..GG.GGG.GGG",  
+        "GGGSSSSSSSSSSSGGG"   
     };
 
+// LEVEL 2 REVISI: Platform lebih rendah agar bisa dilompati
+    private String[] level2 = {
+        "................", 
+        ".............X..", // Row 1: Goal
+        "............GGG.", // Row 2: Pijakan Goal
+        ".........P.P....", // Row 3: Spike kecil
+        "......PPP.s.....", // Row 4: Platform Atas (Tujuan akhir sebelum goal)
+        "....PP..........", // Row 5
+        "..PP............", // Row 6: Spike kecil
+        ".....P..PPP...s.", // Row 7: Platform Kanan (Lompatan kedua)
+        "...PP.......PP..", // Row 8
+        "..P.............", // Row 9: [PENTING] Platform Kiri DITURUNKAN ke sini agar sampai
+        "J..S...S..S.S..G", // Row 10: Player Start
+        "GGGGGGGGGGGGGGGG"  // Row 11: Tanah
+    };
+
+    // LEVEL 3: REVISI (Sesuai gambar: Tangga "Floor is Lava")
     private String[] level3 = {
-        "................G",  // row 0
-        "................G",  // row 1
-        "................G",  // row 2
-        "................G",  // row 3
-        "................G",  // row 4
-        "..........X.....G", // row 5
-        "................G", // row 6
-        ".......G........G",  // row 7
-        "......G.........G",  // row 8
-        ".....G..........G", // row 9  
-        "J...G...........G",  // row 10
-        "GGGGGGGGGGGGGGGGG"   // row 11 -> G = ground bawah
+        "................", 
+        "........X.......", 
+        ".....PP.......PP.", // Goal di puncak kiri
+        "PPP.......PP....", // Tangga 5 (Teratas)
+        ".....PP.........", 
+        "........PP......", // Tangga 4
+        "....PP..........", 
+        ".......PP..P..PP", // Tangga 3
+        ".............P..", 
+        "..J..P.PP.PPP...", // Tangga 2
+        ".PPP............", // Start di pojok kanan bawah
+        "SSSSSSSSSSSSSSSS"  // Lantai penuh duri (Mati kalau jatuh)
     };
 
     private int currLvl = 1;
@@ -82,22 +85,22 @@ public class GamePanel extends JPanel implements Runnable {
     public boolean isPaused = false;
     public String statusMsg = "";
 
-    
-
     public GamePanel() {
-        
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
         this.setDoubleBuffered(true);
         this.addKeyListener(keyH);
         this.setFocusable(true);
 
         loadImages();   // load semua asset
-        player = new Player(100, 400, 26, 26, this, keyH);
         
-        // spawn player
-        loadLevelFromText(level1);
+        // Load level 1 dulu untuk inisialisasi awal
+        loadLevelFromText(level1); 
+        
+        // Player dibuat SETELAH loadLevel supaya tahu spawnX/spawnY dari map
+        if (player == null) {
+            player = new Player(spawnX, spawnY, 26, 40, this, keyH); 
+        }
     }
-
 
     // Game Function
     public void restartGame() {
@@ -110,18 +113,12 @@ public class GamePanel extends JPanel implements Runnable {
         loadCurrentLevel();
     }
 
-    public void nextGame() {
-        loadLevelFromText(level1);
-        player.respawn(100, 400);
-    }
-
     private void loadCurrentLevel() {
         switch (currLvl) {
             case 1 -> loadLevelFromText(level1);
             case 2 -> loadLevelFromText(level2);
             case 3 -> loadLevelFromText(level3);
             default -> {
-                // kalau sampai sini, dianggap sudah menang semua
                 statusMsg = "YOU WIN ALL LEVELS! (R to Restart)";
                 isRunning = false;
             }
@@ -130,18 +127,15 @@ public class GamePanel extends JPanel implements Runnable {
 
     public void nextLevel() {
         currLvl++;
-
         if (currLvl > maxLvl) {
             statusMsg = "YOU WIN ALL LEVELS! (R to Restart)";
             isRunning = false;
             return;
         }
-
-        loadCurrentLevel(); // ini akan panggil loadLevelFromText(levelX)
+        loadCurrentLevel(); 
     }
 
-
-    //Assets Manager
+    // Assets Manager
     private BufferedImage loadImage(String path) {
         try {
             File f = new File(path);
@@ -164,20 +158,19 @@ public class GamePanel extends JPanel implements Runnable {
         imgSpike    = loadImage("assets/spike.png");
         imgGoal     = loadImage("assets/goal.png");
         imgPlatform2 = loadImage("assets/plat.png");
-        imgFruit = loadImage("assets/fruit.png");
+        imgFruit    = loadImage("assets/fruit.png");
     }
-
 
     // Bikin level dari String[] map
     private void loadLevelFromText(String[] map) {
         platforms.clear();
         spikes.clear();
         platforms2.clear();
+        fruit.clear();
         goal = null;
 
-        // Reset spawn ke default dulu (jaga-jaga kalau di map nggak ada 'J')
-        spawnX = 100;
-        spawnY = 400;
+        spawnX = 100; // default
+        spawnY = 400; // default
 
         for (int row = 0; row < map.length; row++) {
             String line = map[row];
@@ -193,11 +186,19 @@ public class GamePanel extends JPanel implements Runnable {
                         break;
 
                     case 'P': // platform melayang
-                        platforms2.add(new Platform2(x, y +30, 48, 5, imgPlatform2));
+                        platforms2.add(new Platform2(x, y + 30, 48, 10, imgPlatform2));
                         break;
 
-                    case 'S': // spike
-                        spikes.add(new Spike(x, y, 50, 52, imgSpike));
+                    case 'S': // SPIKE BESAR (LANTAI)
+                        // Hitbox dikecilkan jadi 30x30 agar lebih fair
+                        // Posisi digeser ke tengah bawah (x+10, y+20)
+                        spikes.add(new Spike(x + 10, y + 20, 30, 30, imgSpike));
+                        break;
+
+                    case 's': // SPIKE KECIL (UNTUK DI ATAS PLATFORM)
+                        // Hitbox mini 20x20
+                        // Posisi digeser supaya pas di atas platform (x+15, y+30)
+                        spikes.add(new Spike(x + 15, y + 30, 20, 20, imgSpike));
                         break;
 
                     case 'X': // goal
@@ -210,23 +211,17 @@ public class GamePanel extends JPanel implements Runnable {
                         break;
                     
                     case 'F':
-                        fruit.add(new Fruit(x+20, y+20, 12, 17, imgFruit));
+                        fruit.add(new Fruit(x+15, y+15, 20, 20, imgFruit));
                         break;
 
-                    case '.':
                     default:
-                        // kosong
                         break;
                 }
             }
         }
 
-        // PERHATIKAN: DI SINI KITA TIDAK BIKIN PLAYER BARU TIAP LEVEL
-        if (player == null) {
-            // HANYA SEKALI, di level pertama
-            player = new Player(spawnX, spawnY, 32, 48, this, keyH);
-        } else {
-            // Pindah level → cukup respawn
+        // Respawn player ke posisi baru
+        if (player != null) {
             player.respawn(spawnX, spawnY);
         }
     }
@@ -235,11 +230,10 @@ public class GamePanel extends JPanel implements Runnable {
         gameThread = new Thread(this);
         gameThread.start();
     }
-
     
     @Override
     public void run() {
-        final double drawInterval = 1000000000.0 / 60.0; // 60 FPS
+        final double drawInterval = 1000000000.0 / 60.0; 
         double nextDrawTime = System.nanoTime() + drawInterval;
 
         while (gameThread != null) {
@@ -258,7 +252,6 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void update() {
-        // Kalau game sudah selesai (menang/kalah)
         if (!isRunning) {
             if (keyH.restartPressed) {
                 restartGame();
@@ -267,7 +260,6 @@ public class GamePanel extends JPanel implements Runnable {
             return;
         }
 
-        // Toggle pause
         if (keyH.pausePressed) {
             isPaused = !isPaused;
             keyH.pausePressed = false;
@@ -275,23 +267,17 @@ public class GamePanel extends JPanel implements Runnable {
 
         if (isPaused) return;
 
-        if (player != null) {
-            player.update();
-        }
+        if (player != null) player.update();
 
-        for (Platform p : platforms) {
-            p.update();
-        }
+        for (Platform p : platforms) p.update();
+        for (Platform2 p2 : platforms2) p2.update();
+        for (Spike s : spikes) s.update(); // (Sebenarnya kosong, tapi good practice)
 
-        for (Platform2 p2 : platforms2) {
-            p2.update();
-        }
-
-        // Cek collision dengan spike & goal
+        // Collision Check
         if (player != null) {
             Rectangle pr = player.hitbox;
 
-            // Spike
+            // Spike Check
             for (Spike s : spikes) {
                 if (pr.intersects(s.hitbox)) {
                     lives--;
@@ -299,25 +285,26 @@ public class GamePanel extends JPanel implements Runnable {
                         statusMsg = "GAME OVER (R to Restart)";
                         isRunning = false;
                     } else {
-                        player.respawn(100, 400);
+                        // Respawn di awal level yang sama
+                        player.respawn(spawnX, spawnY);
                     }
                     break;
                 }
             }
 
+            // Fruit Check
             for (Fruit f : fruit) {
                 if (!f.collected && pr.intersects(f.hitbox)) {
                     score++;
                     f.collected = true; 
-                    break;
+                    break; // ambil satu per frame
+                }
             }
-}
 
-            // Goal
+            // Goal Check
             if (goal != null && pr.intersects(goal.hitbox)) {
                 nextLevel();
                 return;
-
             }
         }
     }
@@ -335,19 +322,11 @@ public class GamePanel extends JPanel implements Runnable {
             g2.fillRect(0, 0, screenWidth, screenHeight);
         }
 
-        // World
-        for (Platform p : platforms) {
-            p.draw(g2);
-        }
-        for (Spike s : spikes) {
-            s.draw(g2);
-        }
-        for (Platform2 p2 : platforms2) {
-            p2.draw(g2);
-        }
-        for (Fruit f : fruit) {
-            f.draw(g2);
-        }
+        // Draw Objects
+        for (Platform p : platforms) p.draw(g2);
+        for (Spike s : spikes) s.draw(g2);
+        for (Platform2 p2 : platforms2) p2.draw(g2);
+        for (Fruit f : fruit) f.draw(g2);
         if (goal != null) goal.draw(g2);
         if (player != null) player.draw(g2);
 
@@ -356,6 +335,7 @@ public class GamePanel extends JPanel implements Runnable {
         g2.setFont(new Font("Arial", Font.BOLD, 18));
         g2.drawString("Lives: " + lives, 20, 30);
         g2.drawString("Score: " + score, 20, 60);
+        g2.drawString("Level: " + currLvl, 20, 90);
 
         if (isPaused) {
             g2.setColor(new Color(0, 0, 0, 150));
@@ -368,7 +348,10 @@ public class GamePanel extends JPanel implements Runnable {
         if (!statusMsg.isEmpty()) {
             g2.setColor(Color.BLACK);
             g2.setFont(new Font("Arial", Font.BOLD, 32));
-            g2.drawString(statusMsg, 150, screenHeight / 2);
+            // Center text simple calculation
+            int stringLen = (int) g2.getFontMetrics().getStringBounds(statusMsg, g2).getWidth();
+            int start = screenWidth / 2 - stringLen / 2;
+            g2.drawString(statusMsg, start, screenHeight / 2);
         }
 
         g2.dispose();
